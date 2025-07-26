@@ -11,9 +11,9 @@ Start your virtual environment
 `source .venv/bin/activate`
 
 
-Install ephem 
+Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy and InquirerPy
 
-`pip install ephem`
+`pip install ephem InquirerPy rich`
 
 
 Move into the moonphase-cli directory 
@@ -60,7 +60,7 @@ Moonrise: 20:37, Moonset: 06:11
 
 Run moonphase 7 days example: 
 
-`moonphase --date 2025-07-20 --zip 43016 --days 7`
+`moonphase --date 2025-07-26 --zip 43016 --days 7`
 
 
 ```
