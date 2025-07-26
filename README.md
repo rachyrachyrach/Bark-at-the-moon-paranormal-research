@@ -11,6 +11,10 @@ Start your virtual environment
 `source .venv/bin/activate`
 
 
+Install ephem 
+
+`pip install ephem`
+
 
 Move into the moonphase-cli directory 
 
