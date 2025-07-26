@@ -43,14 +43,18 @@ pip install -e .
 
 Run moonphase example: 
 
-`moonphase --date 2025-07-26 --zip 10001`
+`moonphase --date 2025-07-26 --zip 43016`
 
 
 
 output: 
 
-`🌕 Full Moon on July 26, 2025 (New York, NY)
-Moonrise: 8:23 PM, Moonset: 6:12 AM`
+```
+🌕 Full Moon on 2025-07-26 for Dublin, OH
+Illumination: 100.0%
+Moonrise: 20:37, Moonset: 06:11
+   ○
+```
 
 
 
@@ -60,13 +64,15 @@ Run moonphase 7 days example:
 
 
 ```
-Moon Phases for Dublin, OH
+Moon Phases
 
-2025-07-20   ◐   First Quarter (nearest on 2025-07-21)
-2025-07-21   ○   Full Moon
-2025-07-22   ○   Full Moon (nearest on 2025-07-21)
-2025-07-23   ○   Full Moon (nearest on 2025-07-21)
-2025-07-24   ○   Full Moon (nearest on 2025-07-21)
-2025-07-25   ○   Full Moon (nearest on 2025-07-21)
-2025-07-26   ○   Full Moon (nearest on 2025-07-21)
+Date         Phase               Illumination
+------------------------------------------------------
+2025-07-20   🌘 Waning Crescent        28.1%
+2025-07-21   🌘 Waning Crescent        18.3%
+2025-07-22   🌘 Waning Crescent        10.2%
+2025-07-23   🌘 Waning Crescent         4.3%
+2025-07-24   🌑 New Moon                1.0%
+2025-07-25   🌑 New Moon                0.1%
+2025-07-26   🌒 Waxing Crescent         1.8%
 ```
