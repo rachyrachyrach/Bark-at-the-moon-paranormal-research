@@ -327,18 +327,23 @@ def main(date, zip_code, days, html_file):
     crime_text = ""
     crime_choice = inquirer.confirm("Fetch FBI crime stats for this state?", default=False).execute()
     if crime_choice:
-        offense_choice = inquirer.select(
+
+        offense_options = [
+            {"name": "🗡 Violent Crime", "value": "V"},
+            {"name": "🏠 Property Crime", "value": "P"},
+            {"name": "🔪 Homicide", "value": "HOM"},
+            {"name": "🔥 Arson", "value": "ARS"},
+            {"name": "💀 Hate Crime", "value": "hate-crime"}  
+        ]
+        offense_code = inquirer.select(
             message="Which offense type?",
-            choices=[
-                {"name": "🗡 Violent Crime", "value": "violent-crime"},
-                {"name": "🏠 Property Crime", "value": "property-crime"},
-                {"name": "🔪 Homicide", "value": "homicide"},
-                {"name": "🔥 Arson", "value": "arson"},
-                {"name": "💀 Hate Crime", "value": "hate-crime"}
-            ],
-            default="violent-crime",
+            choices=offense_options,
+            default="V",
             pointer="👉"
         ).execute()
+
+        
+        offense_choice = offense_code if offense_code != "hate-crime" else "hate-crime"
 
         api_key = os.getenv("FBI_API_KEY")
         if not api_key:
@@ -346,7 +351,9 @@ def main(date, zip_code, days, html_file):
         if api_key and state_abbr != "Unknown":
             total, note, month_table = fetch_fbi_crime_data(state_abbr, offense_choice, year, api_key)
             if total:
-                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] {offense_choice.replace('-', ' ')} incidents in {state_abbr} ({note})"
+                # For label, display the pretty name from offense_options
+                display_name = next((item["name"] for item in offense_options if item["value"] == offense_code), offense_choice.replace('-', ' ').title())
+                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] {display_name} incidents in {state_abbr} ({note})"
                 if month_table:
                     console.print(month_table)
             elif note:
