@@ -93,12 +93,15 @@ Date         Phase               Illumination
 
 # For the Crime data:
 
+    *please note I ran out of time and can only display data by year. 
+
+
 You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
 
 `export FBI_API_KEY="your-api-key-here"`
 
 
- This is the source of the crime data[FBI Crime data explorer](https://cde.ucr.cjis.gov/).
+ This is the source of the crime data[FBI Crime data explorer](https://cde.ucr.cjis.gov/). The [api](https://cde.ucr.cjis.gov/LATEST/webapp/#/pages/docApi)
 
 
 Here is an example api endpoint
@@ -107,3 +110,7 @@ Here is an example api endpoint
 
 
  Personally I use county level data for research but for the the bootdev hackathon, I wanted to keep it simple. 
+
+
+
+ Example of output from the crime api: 

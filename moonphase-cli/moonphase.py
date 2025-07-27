@@ -39,7 +39,6 @@ ASCII_MOONS = {
     "Waning Crescent": "  🌒   ",
 }
 
-# ---------------- ZIP + COUNTY LOOKUP (persistent cache) ----------------
 _zip_cache = None
 
 def load_zip_cache():
@@ -83,39 +82,55 @@ def get_county_from_zip(zip_code):
         return c["county"], c["state"], c["lat"], c["lon"]
     return "Unknown County", "Unknown", 0.0, 0.0
 
-# ---------------- CRIME DATA ----------------
 def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
     headers = {"x-api-key": api_key}
-    attempted_years = [year, year - 1]  # Try current year, then previous year
+    attempted_years = [year, year - 1]
     for attempt_year in attempted_years:
         try:
             if offense == "hate-crime":
-                # Use full-year range, as partial ranges often yield no data
                 from_date = f"01-{attempt_year}"
                 to_date = f"12-{attempt_year}"
                 url = f"{FBI_BASE_URL}/hate-crime/state/{state_abbr.upper()}?type=counts&from={from_date}&to={to_date}&API_KEY={api_key}"
+                res = requests.get(url, headers=headers, timeout=10)
+                if res.status_code in (403, 404):
+                    continue
+                res.raise_for_status()
+                data = res.json()
+                offenses = data.get("actuals", {}).get("Ohio Offenses", {})
+                incidents = data.get("actuals", {}).get("Ohio Incidents", {})
+                total = sum(v for v in offenses.values() if isinstance(v, (int, float)))
+                if total == 0:
+                    continue
+                missing_months = [m for m, v in offenses.items() if v is None]
+                note = f"{attempt_year} (partial)" if missing_months else (f"{attempt_year} (fallback)" if attempt_year != year else str(year))
+                month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                month_table = Table(title=f"Hate Crime Data {attempt_year}", title_style="bold yellow")
+                month_table.add_column("Month", style="cyan")
+                month_table.add_column("Offenses", style="magenta", justify="right")
+                month_table.add_column("Incidents", style="green", justify="right")
+                for idx, m in enumerate(month_names, start=1):
+                    key = f"{idx:02d}-{attempt_year}"
+                    off_val = offenses.get(key)
+                    inc_val = incidents.get(key)
+                    off_str = f"[green]{off_val}[/green]" if off_val is not None else "[red]-[/red]"
+                    inc_str = f"[green]{inc_val}[/green]" if inc_val is not None else "[red]-[/red]"
+                    month_table.add_row(m, off_str, inc_str)
+                return total, note, month_table
             else:
                 url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.upper()}/{offense}/{attempt_year}/{attempt_year}?api_key={api_key}"
-            res = requests.get(url, headers=headers, timeout=10)
-            if res.status_code in (403, 404):
-                continue  # Try next year
-            res.raise_for_status()
-            data = res.json()
-            if offense == "hate-crime":
-                counts = sum(item.get("count", 0) for item in data.get("data", []))
-                if counts == 0:
-                    return None, f"No hate-crime data for {state_abbr} in {attempt_year}."
-                return counts, attempt_year
-            else:
-                totals = sum(item.get("actual", 0) for item in data.get("results", []))
-                if totals == 0:
-                    return None, f"No {offense.replace('-', ' ')} data for {state_abbr} in {attempt_year}."
-                return totals, attempt_year
-        except Exception as e:
+                res = requests.get(url, headers=headers, timeout=10)
+                if res.status_code in (403, 404):
+                    continue
+                res.raise_for_status()
+                results = res.json().get("results", [])
+                total = sum(item.get("actual", 0) for item in results)
+                if total == 0:
+                    continue
+                return total, f"{attempt_year} (fallback)" if attempt_year != year else str(year), None
+        except Exception:
             continue
-    return None, f"No FBI crime data available for {state_abbr} near {year}."
+    return None, f"No FBI crime data available for {state_abbr} near {year}.", None
 
-# ---------------- MOON CALCULATIONS ----------------
 def phase_name_and_illumination(date):
     moon = ephem.Moon(date)
     illum = moon.phase
@@ -158,7 +173,6 @@ def moonrise_moonset(date, lat, lon):
         sett = "N/A"
     return rise, sett
 
-# ---------------- OUTPUT ----------------
 def print_single(date, lat, lon, location, crime_text):
     name, illum = phase_name_and_illumination(date)
     rise, sett = moonrise_moonset(date, lat, lon)
@@ -199,7 +213,6 @@ def print_week(start_date, lat, lon, location, crime_text, days=7):
     if crime_text:
         console.print(f"\n[dim]{crime_text}[/dim]\n")
 
-# ---------------- CLI ----------------
 @click.command()
 @click.option("--date", default=None, help="Start date (YYYY-MM-DD)")
 @click.option("--zip", "zip_code", default=None, help="US ZIP code")
@@ -219,7 +232,6 @@ def main(date, zip_code, days):
     county, state_abbr, lat, lon = get_county_from_zip(zip_code)
     location = f"{county}, {state_abbr}" if county != "Unknown County" else f"ZIP {zip_code}"
 
-    # Crime data prompt
     crime_text = ""
     crime_choice = inquirer.confirm("Fetch FBI crime stats for this state?", default=False).execute()
     if crime_choice:
@@ -240,13 +252,14 @@ def main(date, zip_code, days):
         if not api_key:
             api_key = inquirer.text("Enter FBI API key (leave blank to skip):", default="").execute()
         if api_key and state_abbr != "Unknown":
-            total, error = fetch_fbi_crime_data(state_abbr, offense_choice, year, api_key)
+            total, note, month_table = fetch_fbi_crime_data(state_abbr, offense_choice, year, api_key)
             if total:
-                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] {offense_choice.replace('-', ' ')} incidents in {state_abbr} ({year})"
-            elif error:
-                crime_text = f"[red]{error}[/red]"
+                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] {offense_choice.replace('-', ' ')} incidents in {state_abbr} ({note})"
+                if month_table:
+                    console.print(month_table)
+            elif note:
+                crime_text = f"[red]{note}[/red]"
 
-    # Days selection
     if days is None:
         choice = inquirer.select(
             message="Choose a report:",
@@ -256,7 +269,6 @@ def main(date, zip_code, days):
         ).execute()
         days = int(choice)
 
-    # Output
     if days > 1:
         print_week(start_date, lat, lon, location, crime_text, days)
     else:
