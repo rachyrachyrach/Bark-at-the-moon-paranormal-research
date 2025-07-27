@@ -17,6 +17,19 @@ ZIP_DB = os.path.join(os.path.dirname(__file__), "USCities.json")
 ZIP_CACHE = os.path.join(os.path.dirname(__file__), ".zipcache.json")
 FBI_BASE_URL = "https://api.usa.gov/crime/fbi/cde"
 
+
+OFFENSE_CODES = {
+    "violent-crime": "V",
+    "property-crime": "P",
+    "homicide": "HOM",
+    "arson": "ARS",
+    "assault": "ASS",
+    "burglary": "BUR",
+    "larceny": "LAR",
+    "motor-vehicle-theft": "MVT",
+    "robbery": "ROB",
+}
+
 PHASE_EMOJI = {
     "New Moon": "🌑",
     "Waxing Crescent": "🌒",
@@ -85,6 +98,9 @@ def get_county_from_zip(zip_code):
 def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
     headers = {"x-api-key": api_key}
     attempted_years = [year, year - 1]
+    # Map offense string to proper code if available
+    offense_code = OFFENSE_CODES.get(offense, offense)
+
     for attempt_year in attempted_years:
         try:
             # Special-case logic for hate-crime endpoint
@@ -133,7 +149,7 @@ def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
             # Default summarized endpoint for other offenses
             from_date = f"01-{attempt_year}"
             to_date = f"12-{attempt_year}"
-            url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.upper()}/{offense}?from={from_date}&to={to_date}&API_KEY={api_key}"
+            url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.upper()}/{offense_code}?from={from_date}&to={to_date}&API_KEY={api_key}"
             res = requests.get(url, headers=headers, timeout=10)
             if res.status_code in (403, 404):
                 continue
@@ -207,7 +223,7 @@ def moonrise_moonset(date, lat, lon):
         sett = "N/A"
     return rise, sett
 
-def generate_html_single(date, name, illum, rise, sett, location, emoji, art, crime_text, filename):
+def generate_html_single(date, name, illum, rise, sett, location, emoji, art, crime_text, filename, month_table=None):
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -234,13 +250,19 @@ def generate_html_single(date, name, illum, rise, sett, location, emoji, art, cr
   <pre>{art}</pre>
   <div class="crime">{crime_text}</div>
 </div>
-</body>
-</html>"""
+"""
+    if month_table:
+        html += "<h3 style='margin-top:30px;'>Monthly Breakdown</h3>"
+        html += "<table style='border-collapse:collapse; margin-top:10px; width:100%; color:#f8f8f2;' border='1' cellpadding='6' cellspacing='0'>"
+        # Simply convert the string output of the Rich Table into HTML rows (preformatted)
+        html += f"<pre>{month_table}</pre>"
+        html += "</table>"
+    html += "</body>\n</html>"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(html)
     console.print(f"[green]Saved HTML report to [bold]{filename}[/bold][/green]")
 
-def print_single(date, lat, lon, location, crime_text, ask_html=False, html_filename="moonphase_report.html"):
+def print_single(date, lat, lon, location, crime_text, month_table=None, ask_html=False, html_filename="moonphase_report.html"):
     name, illum = phase_name_and_illumination(date)
     rise, sett = moonrise_moonset(date, lat, lon)
     emoji = PHASE_EMOJI.get(name, "🌙")
@@ -261,7 +283,7 @@ def print_single(date, lat, lon, location, crime_text, ask_html=False, html_file
         )
     )
     if ask_html:
-        generate_html_single(date.strftime("%Y-%m-%d"), name, illum, rise, sett, location, emoji, art, crime_text, html_filename)
+        generate_html_single(date.strftime("%Y-%m-%d"), name, illum, rise, sett, location, emoji, art, crime_text, html_filename, month_table)
 
 def print_week(start_date, lat, lon, location, crime_text, days=7):
     table = Table(title=f"🦇 Moon Phases for {location}", title_style="bold magenta")
@@ -305,18 +327,23 @@ def main(date, zip_code, days, html_file):
     crime_text = ""
     crime_choice = inquirer.confirm("Fetch FBI crime stats for this state?", default=False).execute()
     if crime_choice:
-        offense_choice = inquirer.select(
+
+        offense_options = [
+            {"name": "🗡 Violent Crime", "value": "V"},
+            {"name": "🏠 Property Crime", "value": "P"},
+            {"name": "🔪 Homicide", "value": "HOM"},
+            {"name": "🔥 Arson", "value": "ARS"},
+            {"name": "💀 Hate Crime", "value": "hate-crime"}  
+        ]
+        offense_code = inquirer.select(
             message="Which offense type?",
-            choices=[
-                {"name": "🗡 Violent Crime", "value": "violent-crime"},
-                {"name": "🏠 Property Crime", "value": "property-crime"},
-                {"name": "🔪 Homicide", "value": "homicide"},
-                {"name": "🔥 Arson", "value": "arson"},
-                {"name": "💀 Hate Crime", "value": "hate-crime"}
-            ],
-            default="violent-crime",
+            choices=offense_options,
+            default="V",
             pointer="👉"
         ).execute()
+
+        
+        offense_choice = offense_code if offense_code != "hate-crime" else "hate-crime"
 
         api_key = os.getenv("FBI_API_KEY")
         if not api_key:
@@ -324,7 +351,9 @@ def main(date, zip_code, days, html_file):
         if api_key and state_abbr != "Unknown":
             total, note, month_table = fetch_fbi_crime_data(state_abbr, offense_choice, year, api_key)
             if total:
-                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] {offense_choice.replace('-', ' ')} incidents in {state_abbr} ({note})"
+                # For label, display the pretty name from offense_options
+                display_name = next((item["name"] for item in offense_options if item["value"] == offense_code), offense_choice.replace('-', ' ').title())
+                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] {display_name} incidents in {state_abbr} ({note})"
                 if month_table:
                     console.print(month_table)
             elif note:
@@ -347,7 +376,7 @@ def main(date, zip_code, days, html_file):
     if days > 1:
         print_week(start_date, lat, lon, location, crime_text, days)
     else:
-        print_single(start_date, lat, lon, location, crime_text, ask_html=bool(html_file), html_filename=html_file or "moonphase_report.html")
+        print_single(start_date, lat, lon, location, crime_text, month_table, ask_html=bool(html_file), html_filename=html_file or "moonphase_report.html")
 
 if __name__ == "__main__":
     main()
