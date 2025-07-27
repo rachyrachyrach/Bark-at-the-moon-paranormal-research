@@ -98,12 +98,11 @@ def get_county_from_zip(zip_code):
 def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
     headers = {"x-api-key": api_key}
     attempted_years = [year, year - 1]
-    # Map offense string to proper code if available
     offense_code = OFFENSE_CODES.get(offense, offense)
 
     for attempt_year in attempted_years:
         try:
-            # Special-case logic for hate-crime endpoint
+            # Handle hate-crime separately
             if offense == "hate-crime":
                 from_date = f"01-{attempt_year}"
                 to_date = f"12-{attempt_year}"
@@ -118,35 +117,35 @@ def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
                 total = sum(v for v in offenses.values() if isinstance(v, (int, float)))
                 if total == 0:
                     continue
-                month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+                month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
                 month_table = Table(title=f"Hate Crime Data {attempt_year}", title_style="bold yellow")
                 month_table.add_column("Month", style="cyan")
                 month_table.add_column("Offenses", style="magenta", justify="right")
                 month_table.add_column("Incidents", style="green", justify="right")
-                offenses_total = 0
-                incidents_total = 0
+                offenses_total = incidents_total = 0
                 missing_months = []
                 for idx, m in enumerate(month_names, start=1):
                     key = f"{idx:02d}-{attempt_year}"
                     off_val = offenses.get(key)
                     inc_val = incidents.get(key)
+                    off_str = f"[green]{off_val}[/green]" if isinstance(off_val, (int, float)) else "[red]N/A[/red]"
+                    inc_str = f"[green]{inc_val}[/green]" if isinstance(inc_val, (int, float)) else "[red]N/A[/red]"
                     if isinstance(off_val, (int, float)):
                         offenses_total += off_val
-                        off_str = f"[green]{off_val}[/green]"
                     else:
-                        off_str = "[red]N/A[/red]"
                         missing_months.append(m)
                     if isinstance(inc_val, (int, float)):
                         incidents_total += inc_val
-                        inc_str = f"[green]{inc_val}[/green]"
-                    else:
-                        inc_str = "[red]N/A[/red]"
                     month_table.add_row(m, off_str, inc_str)
-                note = f"{attempt_year} (partial)" if missing_months else (f"{attempt_year} (fallback)" if attempt_year != year else str(year))
-                month_table.add_row("[bold]Total[/bold]", f"[bold yellow]{offenses_total}[/bold yellow]", f"[bold yellow]{incidents_total}[/bold yellow]")
+                note = f"{attempt_year} (partial)" if missing_months else str(attempt_year)
+                month_table.add_row("[bold]Total[/bold]",
+                                    f"[bold yellow]{offenses_total}[/bold yellow]",
+                                    f"[bold yellow]{incidents_total}[/bold yellow]")
                 return total, note, month_table
 
-            # Default summarized endpoint for other offenses
+            # For all other offenses
             from_date = f"01-{attempt_year}"
             to_date = f"12-{attempt_year}"
             url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.upper()}/{offense_code}?from={from_date}&to={to_date}&API_KEY={api_key}"
@@ -155,30 +154,58 @@ def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
                 continue
             res.raise_for_status()
             data = res.json()
+
+            # New format: nested `offenses.actuals.Ohio`
+            actuals = data.get("offenses", {}).get("actuals", {}).get("Ohio", {})
+            if actuals:
+                month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                month_table = Table(title=f"{offense_code} Data {attempt_year}", title_style="bold yellow")
+                month_table.add_column("Month", style="cyan")
+                month_table.add_column("Offenses", style="magenta", justify="right")
+                offenses_total = 0
+                missing_months = []
+                for idx, m in enumerate(month_names, start=1):
+                    key = f"{idx:02d}-{attempt_year}"
+                    val = actuals.get(key)
+                    if isinstance(val, (int, float)):
+                        offenses_total += val
+                        val_str = f"[green]{val}[/green]"
+                    else:
+                        val_str = "[red]N/A[/red]"
+                        missing_months.append(m)
+                    month_table.add_row(m, val_str)
+                note = f"{attempt_year} (partial)" if missing_months else str(attempt_year)
+                month_table.add_row("[bold]Total[/bold]", f"[bold yellow]{offenses_total}[/bold yellow]")
+                return offenses_total, note, month_table
+
+            # Legacy format: `results` array
             results = data.get("results", [])
-            if not results:
-                continue
-            month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-            month_table = Table(title=f"{offense.replace('-', ' ').title()} Data {attempt_year}", title_style="bold yellow")
-            month_table.add_column("Month", style="cyan")
-            month_table.add_column("Offenses", style="magenta", justify="right")
-            offenses_total = 0
-            month_data = {int(item.get("month", 0)): item.get("actual") for item in results}
-            missing_months = []
-            for idx, m in enumerate(month_names, start=1):
-                val = month_data.get(idx)
-                if isinstance(val, (int, float)):
-                    offenses_total += val
-                    val_str = f"[green]{val}[/green]"
-                else:
-                    val_str = "[red]N/A[/red]"
-                    missing_months.append(m)
-                month_table.add_row(m, val_str)
-            note = f"{attempt_year} (partial)" if missing_months else (f"{attempt_year} (fallback)" if attempt_year != year else str(year))
-            month_table.add_row("[bold]Total[/bold]", f"[bold yellow]{offenses_total}[/bold yellow]")
-            return offenses_total, note, month_table
+            if results:
+                month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                month_table = Table(title=f"{offense.replace('-', ' ').title()} Data {attempt_year}", title_style="bold yellow")
+                month_table.add_column("Month", style="cyan")
+                month_table.add_column("Offenses", style="magenta", justify="right")
+                offenses_total = 0
+                month_data = {int(item.get("month", 0)): item.get("actual") for item in results}
+                missing_months = []
+                for idx, m in enumerate(month_names, start=1):
+                    val = month_data.get(idx)
+                    if isinstance(val, (int, float)):
+                        offenses_total += val
+                        val_str = f"[green]{val}[/green]"
+                    else:
+                        val_str = "[red]N/A[/red]"
+                        missing_months.append(m)
+                    month_table.add_row(m, val_str)
+                note = f"{attempt_year} (partial)" if missing_months else str(attempt_year)
+                month_table.add_row("[bold]Total[/bold]", f"[bold yellow]{offenses_total}[/bold yellow]")
+                return offenses_total, note, month_table
+
         except Exception:
             continue
+
     return None, f"No FBI crime data available for {state_abbr} near {year}.", None
 
 def phase_name_and_illumination(date):
