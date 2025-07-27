@@ -67,44 +67,7 @@ You'll be prompted for date, zipcode, 1 day or 7 days and save html file.
 # Output 
 
 ```
-? Enter date (YYYY-MM-DD): 2023-07-27
-? Enter ZIP code (5 digits): 43016
-? Fetch FBI crime stats for this state? Yes
-? Which offense type? 🗡 Violent Crime
-    V Data 2023     
-┏━━━━━━━┳━━━━━━━━━━┓
-┃ Month ┃ Offenses ┃
-┡━━━━━━━╇━━━━━━━━━━┩
-│ Jan   │     2734 │
-│ Feb   │     2494 │
-│ Mar   │     2650 │
-│ Apr   │     2963 │
-│ May   │     3355 │
-│ Jun   │     3194 │
-│ Jul   │     3192 │
-│ Aug   │     3067 │
-│ Sep   │     2896 │
-│ Oct   │     2863 │
-│ Nov   │     2435 │
-│ Dec   │     2581 │
-│ Total │    34424 │
-└───────┴──────────┘
-? Choose a report: 🌙 1 Day
-? Would you like to save this as HTML? Yes
-? Enter filename: moonphase_report.html
-╭───────────────────── 🌙 Moonphase Report ──────────────────────╮
-│ 🌔 Waxing Gibbous                                              │
-│ Date: 2023-07-27                                               │
-│ Location: Franklin, OH                                         │
-│                                                                │
-│ Illumination: 61.2%                                            │
-│ Moonrise: 20:09  Moonset: 05:10                                │
-│                                                                │
-│   🌖                                                           │
-│                                                                │
-│ FBI Crime Stats: ~34424 🗡 Violent Crime incidents in OH (2023) │
-╰────────────────────────────── 🦇 ──────────────────────────────╯
-Saved HTML report to moonphase_report.html
+ ![output](https://github.com/rachyrachyrach/Bark-at-the-moon-paranormal-research/blob/main/docs/output.jpg)
 ```
 
 
