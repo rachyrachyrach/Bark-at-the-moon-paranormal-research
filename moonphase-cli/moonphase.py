@@ -207,7 +207,7 @@ def moonrise_moonset(date, lat, lon):
         sett = "N/A"
     return rise, sett
 
-def generate_html_single(date, name, illum, rise, sett, location, emoji, art, crime_text, filename):
+def generate_html_single(date, name, illum, rise, sett, location, emoji, art, crime_text, filename, month_table=None):
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -234,13 +234,19 @@ def generate_html_single(date, name, illum, rise, sett, location, emoji, art, cr
   <pre>{art}</pre>
   <div class="crime">{crime_text}</div>
 </div>
-</body>
-</html>"""
+"""
+    if month_table:
+        html += "<h3 style='margin-top:30px;'>Monthly Breakdown</h3>"
+        html += "<table style='border-collapse:collapse; margin-top:10px; width:100%; color:#f8f8f2;' border='1' cellpadding='6' cellspacing='0'>"
+        # Simply convert the string output of the Rich Table into HTML rows (preformatted)
+        html += f"<pre>{month_table}</pre>"
+        html += "</table>"
+    html += "</body>\n</html>"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(html)
     console.print(f"[green]Saved HTML report to [bold]{filename}[/bold][/green]")
 
-def print_single(date, lat, lon, location, crime_text, ask_html=False, html_filename="moonphase_report.html"):
+def print_single(date, lat, lon, location, crime_text, month_table=None, ask_html=False, html_filename="moonphase_report.html"):
     name, illum = phase_name_and_illumination(date)
     rise, sett = moonrise_moonset(date, lat, lon)
     emoji = PHASE_EMOJI.get(name, "🌙")
@@ -261,7 +267,7 @@ def print_single(date, lat, lon, location, crime_text, ask_html=False, html_file
         )
     )
     if ask_html:
-        generate_html_single(date.strftime("%Y-%m-%d"), name, illum, rise, sett, location, emoji, art, crime_text, html_filename)
+        generate_html_single(date.strftime("%Y-%m-%d"), name, illum, rise, sett, location, emoji, art, crime_text, html_filename, month_table)
 
 def print_week(start_date, lat, lon, location, crime_text, days=7):
     table = Table(title=f"🦇 Moon Phases for {location}", title_style="bold magenta")
@@ -347,7 +353,7 @@ def main(date, zip_code, days, html_file):
     if days > 1:
         print_week(start_date, lat, lon, location, crime_text, days)
     else:
-        print_single(start_date, lat, lon, location, crime_text, ask_html=bool(html_file), html_filename=html_file or "moonphase_report.html")
+        print_single(start_date, lat, lon, location, crime_text, month_table, ask_html=bool(html_file), html_filename=html_file or "moonphase_report.html")
 
 if __name__ == "__main__":
     main()
