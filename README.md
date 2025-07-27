@@ -29,7 +29,7 @@ Start your virtual environment
 
 ##
 
-Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy) and rich
+Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy) rich Jinja2
 
 `pip install ephem InquirerPy rich Jinja2`
 
@@ -55,12 +55,17 @@ pip install -e .
 ```
 
 
-Run moonphase examples: 
+# Run moonphase: 
+
+Just type moonphase or watch the [video](https://www.youtube.com/watch?v=D_IhfJpjxl8)
 
 `moonphase`
 
 You'll be prompted for date, zipcode, 1 day or 7 days and save html file. 
 
+
+
+Other options, you can type in a set date:
 
 `moonphase --date 2025-07-26 --zip 43016`
 
