@@ -1,0 +1,29 @@
+# Ignore virtual environments
+.venv/
+venv/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# Environment and API keys
+.env
+*.env
+.env.local
+
+# Logs
+*.log
+
+# IDE settings
+.vscode/
+.idea/
+
+# Node (if you ever add frontend bits)
+node_modules/
+dist/
+.DS_Store

@@ -22,7 +22,7 @@ Start your virtual environment
 `source .venv/bin/activate`
 
 
-Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy and InquirerPy
+Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy) and rich
 
 `pip install ephem InquirerPy rich`
 
@@ -38,7 +38,6 @@ Example of location:
 
 ```
 /Users/rachael/github/Bark-at-the-moon-paranormal-research/moonphase-cli
-
 ```
 
 
@@ -46,7 +45,6 @@ Install moonphase-cli
 
 ```
 pip install -e .
-
 ```
 
 
@@ -54,8 +52,10 @@ Run moonphase examples:
 
 `moonphase`
 
-`moonphase --date 2025-07-26 --zip 43016`
+You'll be prompted for date, zipcode, 1 day or 7 days and save html file. 
 
+
+`moonphase --date 2025-07-26 --zip 43016`
 
 
 output: 
@@ -87,3 +87,17 @@ Date         Phase               Illumination
 2025-07-25   🌑 New Moon                0.1%
 2025-07-26   🌒 Waxing Crescent         1.8%
 ```
+
+
+
+
+# For the Crime data:
+
+You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
+
+`export FBI_API_KEY="your-api-key-here"`
+
+
+ This is the source of the crime data[FBI Crime data explorer](https://cde.ucr.cjis.gov/).
+
+ Personally I use county level data for research but for the the bootdev hackathon, I wanted to keep it simple. 
