@@ -17,6 +17,19 @@ ZIP_DB = os.path.join(os.path.dirname(__file__), "USCities.json")
 ZIP_CACHE = os.path.join(os.path.dirname(__file__), ".zipcache.json")
 FBI_BASE_URL = "https://api.usa.gov/crime/fbi/cde"
 
+
+OFFENSE_CODES = {
+    "violent-crime": "V",
+    "property-crime": "P",
+    "homicide": "HOM",
+    "arson": "ARS",
+    "assault": "ASS",
+    "burglary": "BUR",
+    "larceny": "LAR",
+    "motor-vehicle-theft": "MVT",
+    "robbery": "ROB",
+}
+
 PHASE_EMOJI = {
     "New Moon": "🌑",
     "Waxing Crescent": "🌒",
@@ -85,6 +98,9 @@ def get_county_from_zip(zip_code):
 def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
     headers = {"x-api-key": api_key}
     attempted_years = [year, year - 1]
+    # Map offense string to proper code if available
+    offense_code = OFFENSE_CODES.get(offense, offense)
+
     for attempt_year in attempted_years:
         try:
             # Special-case logic for hate-crime endpoint
@@ -133,7 +149,7 @@ def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
             # Default summarized endpoint for other offenses
             from_date = f"01-{attempt_year}"
             to_date = f"12-{attempt_year}"
-            url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.upper()}/{offense}?from={from_date}&to={to_date}&API_KEY={api_key}"
+            url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.upper()}/{offense_code}?from={from_date}&to={to_date}&API_KEY={api_key}"
             res = requests.get(url, headers=headers, timeout=10)
             if res.status_code in (403, 404):
                 continue
