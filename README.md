@@ -16,17 +16,19 @@ Make your virtual environment
 
 `python3 -m venv .venv`
 
+##
 
 Start your virtual environment 
 
 `source .venv/bin/activate`
 
+##
 
 Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy) and rich
 
 `pip install ephem InquirerPy rich`
 
-
+##
 Move into the moonphase-cli directory 
 
 

@@ -38,29 +38,34 @@ ASCII_MOONS = {
     "Waning Crescent": "  🌒   ",
 }
 
-# ---------------- ZIP + COUNTY LOOKUP ----------------
+# ---------------- ZIP + COUNTY LOOKUP (with caching) ----------------
+_zip_cache = None
+
 def get_county_from_zip(zip_code):
     """
     Look up county and state for a given ZIP using the USCities.json dataset.
-    Searches the list for the matching ZIP.
+    Caches the JSON in memory so it's only read once.
     """
-    try:
-        with open(ZIP_DB, "r", encoding="utf-8") as f:
-            records = json.load(f)
-        for entry in records:
-            if entry.get("zip_code") == zip_code:
-                county = entry.get("county", "Unknown County")
-                state = entry.get("state", "Unknown")
-                return county, state
-    except Exception as e:
-        console.print(f"[red]Error reading ZIP database: {e}[/red]")
+    global _zip_cache
+    if _zip_cache is None:
+        try:
+            with open(ZIP_DB, "r", encoding="utf-8") as f:
+                _zip_cache = json.load(f)
+        except Exception as e:
+            console.print(f"[red]Error reading ZIP database: {e}[/red]")
+            _zip_cache = []
+
+    for entry in _zip_cache:
+        if entry.get("zip_code") == zip_code:
+            county = entry.get("county", "Unknown County")
+            state = entry.get("state", "Unknown")
+            return county, state
     return "Unknown County", "Unknown"
 
 # ---------------- CRIME DATA ----------------
 def fetch_fbi_crime_data(state_abbr, county_name, api_key):
-    """Fetch recent violent crime totals for the given state."""
+    """Fetch recent violent crime totals for the given state (county-level not available directly)."""
     headers = {"x-api-key": api_key}
-    # State-level summary (since FBI doesn't have per-county breakdown via this endpoint)
     url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.lower()}/violent-crime/2021/2022"
     try:
         res = requests.get(url, headers=headers, timeout=10)
@@ -192,7 +197,7 @@ def main(date, zip_code, days, html_file):
 
     start_date = dt.fromisoformat(date)
 
-    # Get county/state from local JSON
+    # Get county/state from local JSON (cached)
     county, state_abbr = get_county_from_zip(zip_code)
 
     # Crime stats
@@ -211,7 +216,7 @@ def main(date, zip_code, days, html_file):
         else:
             crime_text = "[yellow]County not found for this ZIP — skipping FBI data.[/yellow]"
 
-    # For now, only single-day output
+    # Default to single-day report
     if days is None:
         days = 1
 
@@ -221,6 +226,7 @@ def main(date, zip_code, days, html_file):
         if save_choice:
             html_file = inquirer.text("Enter filename:", default="moonphase_report.html").execute()
 
+    # Print the single-day report (multi-day forecast could be added later)
     print_single(start_date, 40.0985, -83.1537, f"{county}, {state_abbr}", bool(html_file), html_file or "moonphase_report.html", crime_text)
 
 if __name__ == "__main__":
