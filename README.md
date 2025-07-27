@@ -66,9 +66,7 @@ You'll be prompted for date, zipcode, 1 day or 7 days and save html file.
 
 # Output 
 
-```
- ![output](https://github.com/rachyrachyrach/Bark-at-the-moon-paranormal-research/blob/main/docs/output.jpg)
-```
+![output](https://github.com/rachyrachyrach/Bark-at-the-moon-paranormal-research/blob/main/docs/output.jpg)
 
 
 
