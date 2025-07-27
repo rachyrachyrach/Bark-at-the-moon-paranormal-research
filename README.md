@@ -16,17 +16,19 @@ Make your virtual environment
 
 `python3 -m venv .venv`
 
+##
 
 Start your virtual environment 
 
 `source .venv/bin/activate`
 
+##
 
 Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy) and rich
 
 `pip install ephem InquirerPy rich`
 
-
+##
 Move into the moonphase-cli directory 
 
 
@@ -89,15 +91,26 @@ Date         Phase               Illumination
 ```
 
 
-
-
 # For the Crime data:
+
+    *please note I ran out of time and can only display data by year. 
+
 
 You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
 
 `export FBI_API_KEY="your-api-key-here"`
 
 
- This is the source of the crime data[FBI Crime data explorer](https://cde.ucr.cjis.gov/).
+ This is the source of the crime data[FBI Crime data explorer](https://cde.ucr.cjis.gov/). The [api](https://cde.ucr.cjis.gov/LATEST/webapp/#/pages/docApi)
+
+
+Here is an example api endpoint
+
+`https://api.usa.gov/crime/fbi/sapi/api/summarized/state/{state_abbr}/violent-crime/{start_year}/{end_year}?api_key=YOUR_KEY`
+
 
  Personally I use county level data for research but for the the bootdev hackathon, I wanted to keep it simple. 
+
+
+
+ Example of output from the crime api: 
