@@ -91,8 +91,6 @@ Date         Phase               Illumination
 ```
 
 
-
-
 # For the Crime data:
 
 You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
@@ -101,5 +99,11 @@ You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
 
 
  This is the source of the crime data[FBI Crime data explorer](https://cde.ucr.cjis.gov/).
+
+
+Here is an example api endpoint
+
+`https://api.usa.gov/crime/fbi/sapi/api/summarized/state/{state_abbr}/violent-crime/{start_year}/{end_year}?api_key=YOUR_KEY`
+
 
  Personally I use county level data for research but for the the bootdev hackathon, I wanted to keep it simple. 
