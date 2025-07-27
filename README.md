@@ -93,7 +93,7 @@ Date         Phase               Illumination
 
 # For the Crime data:
 
-    *please note I ran out of time and can only display data by year. 
+_please note I ran out of time and can only display data by year._
 
 
 1. You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
