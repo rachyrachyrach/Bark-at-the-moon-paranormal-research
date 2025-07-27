@@ -114,7 +114,7 @@ _please note I ran out of time and can only display data by year._
 `export FBI_API_KEY="your-api-key-here"`
 
 
- This is the source of the crime data[FBI Crime data explorer](https://cde.ucr.cjis.gov/). The [api](https://cde.ucr.cjis.gov/LATEST/webapp/#/pages/docApi)
+ This is the source of the crime data [FBI Crime data explorer](https://cde.ucr.cjis.gov/). The [api](https://cde.ucr.cjis.gov/LATEST/webapp/#/pages/docApi)
 
 
 Here is an example api endpoint
@@ -129,4 +129,4 @@ Here is an example api endpoint
 
 
  Example of output from the crime api: 
- ![Chart](/docs/images/fbi_api.jpg)
+ ![Chart](https://github.com/rachyrachyrach/Bark-at-the-moon-paranormal-research/blob/main/docs/fbi_api.jpg)
