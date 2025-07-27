@@ -38,7 +38,6 @@ Example of location:
 
 ```
 /Users/rachael/github/Bark-at-the-moon-paranormal-research/moonphase-cli
-
 ```
 
 
@@ -46,7 +45,6 @@ Install moonphase-cli
 
 ```
 pip install -e .
-
 ```
 
 
@@ -54,8 +52,10 @@ Run moonphase examples:
 
 `moonphase`
 
-`moonphase --date 2025-07-26 --zip 43016`
+You'll be prompted for date, zipcode, 1 day or 7 days and save html file. 
 
+
+`moonphase --date 2025-07-26 --zip 43016`
 
 
 output: 
