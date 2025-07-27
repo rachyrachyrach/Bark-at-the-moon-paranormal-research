@@ -26,3 +26,4 @@ Thumbs.db
 # Node (if you ever add frontend bits)
 node_modules/
 dist/
+.DS_Store

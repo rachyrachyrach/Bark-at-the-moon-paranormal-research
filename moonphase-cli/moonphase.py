@@ -13,7 +13,7 @@ from rich.table import Table
 
 console = Console()
 
-ZIP_DB = os.path.join(os.path.dirname(__file__), "zip_counties.json")
+ZIP_DB = os.path.join(os.path.dirname(__file__), "USCities.json")
 FBI_BASE_URL = "https://api.usa.gov/crime/fbi/sapi/api"
 
 PHASE_EMOJI = {
@@ -40,13 +40,18 @@ ASCII_MOONS = {
 
 # ---------------- ZIP + COUNTY LOOKUP ----------------
 def get_county_from_zip(zip_code):
-    """Look up county + state using a local JSON database."""
+    """
+    Look up county and state for a given ZIP using the USCities.json dataset.
+    Searches the list for the matching ZIP.
+    """
     try:
         with open(ZIP_DB, "r", encoding="utf-8") as f:
-            db = json.load(f)
-        if zip_code in db:
-            entry = db[zip_code]
-            return entry.get("county", "Unknown County"), entry.get("state", "Unknown")
+            records = json.load(f)
+        for entry in records:
+            if entry.get("zip_code") == zip_code:
+                county = entry.get("county", "Unknown County")
+                state = entry.get("state", "Unknown")
+                return county, state
     except Exception as e:
         console.print(f"[red]Error reading ZIP database: {e}[/red]")
     return "Unknown County", "Unknown"
