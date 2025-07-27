@@ -65,6 +65,8 @@ You'll be prompted for date, zipcode, 1 day or 7 days and save html file.
 
 
 # Output 
+
+```
 ? Enter date (YYYY-MM-DD): 2023-07-27
 ? Enter ZIP code (5 digits): 43016
 ? Fetch FBI crime stats for this state? Yes
@@ -103,7 +105,7 @@ You'll be prompted for date, zipcode, 1 day or 7 days and save html file.
 │ FBI Crime Stats: ~34424 🗡 Violent Crime incidents in OH (2023) │
 ╰────────────────────────────── 🦇 ──────────────────────────────╯
 Saved HTML report to moonphase_report.html
-
+```
 
 
 
