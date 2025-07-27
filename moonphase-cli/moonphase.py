@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import json
 import requests
 import datetime
 from datetime import datetime as dt, timedelta
@@ -12,8 +13,7 @@ from rich.table import Table
 
 console = Console()
 
-ZIP_COORDS_API = "http://api.zippopotam.us/us/{zip}"
-ZIP_COUNTY_API = "https://public.opendatasoft.com/api/records/1.0/search/?dataset=us-zip-code-latitude-and-longitude&q={zip}"
+ZIP_DB = os.path.join(os.path.dirname(__file__), "zip_counties.json")
 FBI_BASE_URL = "https://api.usa.gov/crime/fbi/sapi/api"
 
 PHASE_EMOJI = {
@@ -38,32 +38,24 @@ ASCII_MOONS = {
     "Waning Crescent": "  🌒   ",
 }
 
-
-def get_coords(zip_code):
-    res = requests.get(ZIP_COORDS_API.format(zip=zip_code))
-    res.raise_for_status()
-    data = res.json()
-    place = data["places"][0]
-    lat = float(place["latitude"])
-    lon = float(place["longitude"])
-    loc = f"{place['place name']}, {place['state abbreviation']}"
-    return lat, lon, loc, place["state abbreviation"]
-
-
+# ---------------- ZIP + COUNTY LOOKUP ----------------
 def get_county_from_zip(zip_code):
-    res = requests.get(ZIP_COUNTY_API.format(zip=zip_code))
-    res.raise_for_status()
-    records = res.json().get("records", [])
-    if records:
-        fields = records[0].get("fields", {})
-        return fields.get("county", "Unknown County")
-    return "Unknown County"
+    """Look up county + state using a local JSON database."""
+    try:
+        with open(ZIP_DB, "r", encoding="utf-8") as f:
+            db = json.load(f)
+        if zip_code in db:
+            entry = db[zip_code]
+            return entry.get("county", "Unknown County"), entry.get("state", "Unknown")
+    except Exception as e:
+        console.print(f"[red]Error reading ZIP database: {e}[/red]")
+    return "Unknown County", "Unknown"
 
-
+# ---------------- CRIME DATA ----------------
 def fetch_fbi_crime_data(state_abbr, county_name, api_key):
-    """Fetch recent violent crime summary for the given state/county."""
-    county_clean = county_name.replace(" County", "").upper()
+    """Fetch recent violent crime totals for the given state."""
     headers = {"x-api-key": api_key}
+    # State-level summary (since FBI doesn't have per-county breakdown via this endpoint)
     url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.lower()}/violent-crime/2021/2022"
     try:
         res = requests.get(url, headers=headers, timeout=10)
@@ -74,7 +66,7 @@ def fetch_fbi_crime_data(state_abbr, county_name, api_key):
     except Exception as e:
         return None, str(e)
 
-
+# ---------------- MOON CALCULATIONS ----------------
 def phase_name_and_illumination(date):
     moon = ephem.Moon(date)
     illum = moon.phase
@@ -101,7 +93,6 @@ def phase_name_and_illumination(date):
 
     return name, round(illum, 1)
 
-
 def moonrise_moonset(date, lat, lon):
     observer = ephem.Observer()
     observer.lat = str(lat)
@@ -118,7 +109,7 @@ def moonrise_moonset(date, lat, lon):
         sett = "N/A"
     return rise, sett
 
-
+# ---------------- HTML GENERATION ----------------
 def generate_html_single(date, name, illum, rise, sett, location, emoji, art, crime_text, filename):
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -131,7 +122,6 @@ def generate_html_single(date, name, illum, rise, sett, location, emoji, art, cr
   h2 {{ color: #50fa7b; }}
   .card {{ background-color: #282a36; border: 1px solid #bd93f9; padding: 20px; max-width: 400px; margin: auto; text-align: center; }}
   .moon {{ font-size: 4rem; }}
-  .bat {{ font-size: 2rem; color: #ff79c6; float: right; }}
   .crime {{ margin-top: 20px; color: #f1fa8c; }}
 </style>
 </head>
@@ -153,7 +143,7 @@ def generate_html_single(date, name, illum, rise, sett, location, emoji, art, cr
         f.write(html)
     console.print(f"[green]Saved HTML report to [bold]{filename}[/bold][/green]")
 
-
+# ---------------- TERMINAL OUTPUT ----------------
 def print_single(date, lat, lon, location, ask_html, html_filename, crime_text):
     name, illum = phase_name_and_illumination(date)
     rise, sett = moonrise_moonset(date, lat, lon)
@@ -178,14 +168,14 @@ def print_single(date, lat, lon, location, ask_html, html_filename, crime_text):
     if ask_html:
         generate_html_single(date.strftime("%Y-%m-%d"), name, illum, rise, sett, location, emoji, art, crime_text, html_filename)
 
-
+# ---------------- CLI ENTRY ----------------
 @click.command()
 @click.option("--date", default=None, help="Start date (YYYY-MM-DD)")
 @click.option("--zip", "zip_code", default=None, help="US ZIP code for location")
 @click.option("--days", default=None, type=int, help="Number of days (1 or 7)")
 @click.option("--html", "html_file", default=None, help="Optional filename to save as HTML")
 def main(date, zip_code, days, html_file):
-    # Prompt for date/ZIP if not provided
+    # Ask for date & ZIP
     if date is None:
         date = inquirer.text("Enter date (YYYY-MM-DD):", default=datetime.date.today().isoformat()).execute()
     if zip_code is None:
@@ -196,7 +186,9 @@ def main(date, zip_code, days, html_file):
             console.print("[red]Invalid ZIP code. Please enter 5 digits.[/red]")
 
     start_date = dt.fromisoformat(date)
-    lat, lon, location, state_abbr = get_coords(zip_code)
+
+    # Get county/state from local JSON
+    county, state_abbr = get_county_from_zip(zip_code)
 
     # Crime stats
     crime_text = ""
@@ -205,40 +197,26 @@ def main(date, zip_code, days, html_file):
         api_key = os.getenv("FBI_API_KEY")
         if not api_key:
             api_key = inquirer.text("Enter your FBI API key (leave blank to skip):", default="").execute()
-        if api_key:
-            county = get_county_from_zip(zip_code)
+        if api_key and state_abbr != "Unknown":
             total, details = fetch_fbi_crime_data(state_abbr, county, api_key)
             if total:
-                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] violent crimes (2021-2022) in {county}, {state_abbr}"
+                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] violent crimes (2021–2022) in {county}, {state_abbr}"
             else:
                 crime_text = f"[red]Could not fetch FBI data: {details}[/red]"
+        else:
+            crime_text = "[yellow]County not found for this ZIP — skipping FBI data.[/yellow]"
 
-    # Prompt for days if not specified
+    # For now, only single-day output
     if days is None:
-        console.print("\n[bold purple]🦇 Bark at the Moon - Paranormal Research[/bold purple]")
-        console.print("[dim]Use arrow keys or Tab to select, Enter to confirm[/dim]\n")
-        console.print(Panel.fit("[bold magenta]Select your moon report:[/bold magenta]", border_style="purple", title="🌙 Moonphase CLI", subtitle="🦇"))
-        choice = inquirer.select(
-            message="Choose a report:",
-            choices=[{"name": "🌙  1 Day (Today)", "value": 1}, {"name": "📅  7 Days (Weekly Calendar)", "value": 7}],
-            default=1,
-            pointer="👉",
-        ).execute()
-        days = int(choice)
+        days = 1
 
-    # Prompt for HTML save
+    # HTML output prompt
     if html_file is None:
         save_choice = inquirer.confirm("Would you like to save this as HTML?", default=True).execute()
         if save_choice:
             html_file = inquirer.text("Enter filename:", default="moonphase_report.html").execute()
 
-    ask_html = bool(html_file)
-
-    if days > 1:
-        # For now, only single-day has crime data integrated
-        console.print("[yellow]Crime data currently only shown for single-day reports.[/yellow]")
-    print_single(start_date, lat, lon, location, ask_html, html_file or "moonphase_report.html", crime_text)
-
+    print_single(start_date, 40.0985, -83.1537, f"{county}, {state_abbr}", bool(html_file), html_file or "moonphase_report.html", crime_text)
 
 if __name__ == "__main__":
     main()
