@@ -107,7 +107,6 @@ Saved HTML report to moonphase_report.html
 
 
 
-
 Other options, you can type in a set date:
 
 `moonphase --date 2025-07-26 --zip 43016`
