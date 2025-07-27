@@ -176,7 +176,7 @@ def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
                         missing_months.append(m)
                     month_table.add_row(m, val_str)
                 note = f"{attempt_year} (partial)" if missing_months else str(attempt_year)
-                month_table.add_row("[bold]Total[/bold]", f"[bold yellow]{offenses_total}[/bold yellow]")
+                month_table.add_row("[bold]Total[/bold]", f"{offenses_total}")
                 return offenses_total, note, month_table
 
             # Legacy format: `results` array
@@ -263,6 +263,10 @@ def generate_html_single(date, name, illum, rise, sett, location, emoji, art, cr
   .card {{ background-color: #282a36; border: 1px solid #bd93f9; padding: 20px; max-width: 400px; margin: auto; text-align: center; }}
   .moon {{ font-size: 4rem; }}
   .crime {{ margin-top: 20px; color: #f1fa8c; }}
+  table {{ border-collapse: collapse; margin-top: 20px; width: 100%; max-width: 500px; color: #f8f8f2; margin-left: auto; margin-right: auto; }}
+  th, td {{ border: 1px solid #bd93f9; padding: 8px; text-align: right; }}
+  th {{ background-color: #44475a; text-align: center; }}
+  caption {{ margin-bottom: 10px; font-weight: bold; color: #50fa7b; }}
 </style>
 </head>
 <body>
@@ -278,17 +282,32 @@ def generate_html_single(date, name, illum, rise, sett, location, emoji, art, cr
   <div class="crime">{crime_text}</div>
 </div>
 """
+
+    # Render month_table as an actual HTML table
     if month_table:
-        html += "<h3 style='margin-top:30px;'>Monthly Breakdown</h3>"
-        html += "<table style='border-collapse:collapse; margin-top:10px; width:100%; color:#f8f8f2;' border='1' cellpadding='6' cellspacing='0'>"
-        # Simply convert the string output of the Rich Table into HTML rows (preformatted)
-        html += f"<pre>{month_table}</pre>"
-        html += "</table>"
+        html += "<table>\n"
+        # Use the table title as a caption
+        if month_table.title:
+            html += f"<caption>{month_table.title}</caption>\n"
+        # Add headers if the Rich Table has columns
+        if month_table.columns:
+            html += "<tr>"
+            for col in month_table.columns:
+                html += f"<th>{col.header}</th>"
+            html += "</tr>\n"
+        # Add data rows
+        for row in month_table.rows:
+            html += "<tr>"
+            # Safely convert each cell
+            for cell in getattr(row, "_cells", []):
+                html += f"<td>{cell}</td>"
+            html += "</tr>\n"
+        html += "</table>\n"
+
     html += "</body>\n</html>"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(html)
     console.print(f"[green]Saved HTML report to [bold]{filename}[/bold][/green]")
-
 def print_single(date, lat, lon, location, crime_text, month_table=None, ask_html=False, html_filename="moonphase_report.html"):
     name, illum = phase_name_and_illumination(date)
     rise, sett = moonrise_moonset(date, lat, lon)
@@ -380,7 +399,7 @@ def main(date, zip_code, days, html_file):
             if total:
                 # For label, display the pretty name from offense_options
                 display_name = next((item["name"] for item in offense_options if item["value"] == offense_code), offense_choice.replace('-', ' ').title())
-                crime_text = f"[bold magenta]FBI Crime Stats[/bold magenta]: ~[yellow]{total}[/yellow] {display_name} incidents in {state_abbr} ({note})"
+                crime_text = f"FBI Crime Stats: ~{total} {display_name} incidents in {state_abbr} ({note})"
                 if month_table:
                     console.print(month_table)
             elif note:
