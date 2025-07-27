@@ -1,6 +1,17 @@
 # Bark-at-the-moon-paranormal-research
 For the [Boot.dev July 2025 Hackathon!](https://blog.boot.dev/news/hackathon-2025/)
 
+I run a paranormal group for 15+ years called [TOPS](http://www.tennesseeohioparanormalsociety.com/).  We love using tech to help us in our research.  I like to save data
+on locations and the environment.    This small script is to record what the current moon phase in at the location and crime data.  
+
+
+I'm a skeptic and believe "Correlation does not imply causation" but it's still fun to look at the data. 
+
+
+
+
+## Install
+
 Make your virtual environment
 
 `python3 -m venv .venv`
@@ -39,9 +50,9 @@ pip install -e .
 ```
 
 
+Run moonphase examples: 
 
-
-Run moonphase example: 
+`moonphase`
 
 `moonphase --date 2025-07-26 --zip 43016`
 
