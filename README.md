@@ -106,7 +106,7 @@ Date         Phase               Illumination
 ```
 
 
-# For the Crime data:
+# The Crime data:
 
 _please note I ran out of time and can only display data by year._
 
