@@ -96,7 +96,10 @@ Date         Phase               Illumination
     *please note I ran out of time and can only display data by year. 
 
 
-You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
+1. You will need an api key. It is free on [Gov api](https://api.data.gov/signup/)
+
+
+2. add your api locally
 
 `export FBI_API_KEY="your-api-key-here"`
 
@@ -111,6 +114,9 @@ Here is an example api endpoint
 
  Personally I use county level data for research but for the the bootdev hackathon, I wanted to keep it simple. 
 
+ When we are on an investigation, we run [property searches](https://www.tennesseeohioparanormalsociety.com/research-property-search-public-records-by-using-osint/) and then you can search for the indicents in the news or county records. 
+
 
 
  Example of output from the crime api: 
+ ![Chart](/docs/images/fbi_api.jpg)

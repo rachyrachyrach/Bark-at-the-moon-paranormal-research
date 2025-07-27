@@ -108,14 +108,25 @@ def fetch_fbi_crime_data(state_abbr, offense, year, api_key):
                 month_table.add_column("Month", style="cyan")
                 month_table.add_column("Offenses", style="magenta", justify="right")
                 month_table.add_column("Incidents", style="green", justify="right")
+                offenses_total = 0
+                incidents_total = 0
                 for idx, m in enumerate(month_names, start=1):
                     key = f"{idx:02d}-{attempt_year}"
                     off_val = offenses.get(key)
                     inc_val = incidents.get(key)
-                    off_str = f"[green]{off_val}[/green]" if off_val is not None else "[red]-[/red]"
-                    inc_str = f"[green]{inc_val}[/green]" if inc_val is not None else "[red]-[/red]"
+                    if isinstance(off_val, (int, float)):
+                        offenses_total += off_val
+                        off_str = f"[green]{off_val}[/green]"
+                    else:
+                        off_str = "[red]N/A[/red]"
+                    if isinstance(inc_val, (int, float)):
+                        incidents_total += inc_val
+                        inc_str = f"[green]{inc_val}[/green]"
+                    else:
+                        inc_str = "[red]N/A[/red]"
                     month_table.add_row(m, off_str, inc_str)
-                return total, note, month_table
+                month_table.add_row("[bold]Total[/bold]", f"[bold yellow]{offenses_total}[/bold yellow]", f"[bold yellow]{incidents_total}[/bold yellow]")
+                return offenses_total, note, month_table
             else:
                 url = f"{FBI_BASE_URL}/summarized/state/{state_abbr.upper()}/{offense}/{attempt_year}/{attempt_year}?api_key={api_key}"
                 res = requests.get(url, headers=headers, timeout=10)
