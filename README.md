@@ -1,6 +1,11 @@
 # Bark-at-the-moon-paranormal-research
 For the [Boot.dev July 2025 Hackathon!](https://blog.boot.dev/news/hackathon-2025/)
 
+[![Bark-at-the-moon-paranormal-research](http://img.youtube.com/vi/D_IhfJpjxl8/0.jpg)](http://www.youtube.com/watch?v=D_IhfJpjxl8 "Bark-at-the-moon-paranormal-research")
+
+
+
+
 I run a paranormal group for 15+ years called [TOPS](http://www.tennesseeohioparanormalsociety.com/).  We love using tech to help us in our research.  I like to save data
 on locations and the environment.    This small script is to record what the current moon phase in at the location and crime data.  
 
@@ -26,7 +31,7 @@ Start your virtual environment
 
 Install [ephem](https://rhodesmill.org/pyephem/) and [InquirerPy](https://github.com/CITGuru/InquirerPy) and rich
 
-`pip install ephem InquirerPy rich`
+`pip install ephem InquirerPy rich Jinja2`
 
 ##
 Move into the moonphase-cli directory 
